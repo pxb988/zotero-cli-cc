@@ -224,3 +224,39 @@ class TestPdfAndWorkspaceIntegration:
         # Exit 4 (NOT_FOUND) per the agent contract.
         assert result.exit_code == 4
         assert "no pdf attachment" in result.output.lower() or "not found" in result.output.lower()
+
+
+class TestPdfAttachmentOption:
+    def test_addresses_specific_attachment(self):
+        # ATCH005 is the (only) PDF of ATTN001 and has a real file in storage/.
+        mock_extractor = MagicMock()
+        mock_extractor.extract_text.return_value = "addressed text"
+        mock_extractor.name.return_value = "pymupdf"
+        with patch("zotero_cli_cc.core.pdf_cache.PdfCache") as mock_cache_cls:
+            mock_cache = MagicMock()
+            mock_cache.get.return_value = None
+            mock_cache_cls.return_value = mock_cache
+            with patch("zotero_cli_cc.commands.pdf.get_extractor", return_value=mock_extractor):
+                result = _invoke(["pdf", "ATTN001", "--attachment", "ATCH005", "--extractor", "pymupdf"])
+        assert result.exit_code == 0
+        assert "addressed text" in result.output
+
+    def test_ownership_check_rejects_foreign_attachment(self):
+        # ATCH013 is a real PDF, but it belongs to BILI011, not ATTN001.
+        # Resolution returns None before any extraction -> NOT_FOUND.
+        result = _invoke(["pdf", "ATTN001", "--attachment", "ATCH013"], json_output=True)
+        assert result.exit_code == 4
+        assert "is not a pdf attachment of" in result.output.lower()
+
+    def test_without_attachment_falls_back_to_main_pdf(self):
+        mock_extractor = MagicMock()
+        mock_extractor.extract_text.return_value = "main text"
+        mock_extractor.name.return_value = "pymupdf"
+        with patch("zotero_cli_cc.core.pdf_cache.PdfCache") as mock_cache_cls:
+            mock_cache = MagicMock()
+            mock_cache.get.return_value = None
+            mock_cache_cls.return_value = mock_cache
+            with patch("zotero_cli_cc.commands.pdf.get_extractor", return_value=mock_extractor):
+                result = _invoke(["pdf", "ATTN001", "--extractor", "pymupdf"])
+        assert result.exit_code == 0
+        assert "main text" in result.output

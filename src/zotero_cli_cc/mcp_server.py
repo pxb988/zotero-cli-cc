@@ -175,11 +175,16 @@ def _handle_read(key: str, detail: str = "standard", library: str = "user") -> d
     }
 
 
-def _handle_pdf(key: str, pages: str | None, library: str = "user") -> dict:
+def _handle_pdf(key: str, pages: str | None, library: str = "user", attachment: str | None = None) -> dict:
     reader = _get_reader(library)
-    att = reader.get_pdf_attachment(key)
-    if att is None:
-        raise ValueError(f"No PDF attachment found for item '{key}'")
+    if attachment:
+        att = reader.get_pdf_attachment_by_key(attachment, parent_key=key)
+        if att is None:
+            raise ValueError(f"Attachment '{attachment}' is not a PDF attachment of '{key}'")
+    else:
+        att = reader.get_pdf_attachment(key)
+        if att is None:
+            raise ValueError(f"No PDF attachment found for item '{key}'")
     pdf_path = att.path
     if not pdf_path or not pdf_path.exists():
         raise ValueError(f"PDF file not found at {pdf_path or att.filename}")
@@ -1273,15 +1278,17 @@ def read(key: str, detail: str = "standard", library: str = "user") -> dict:
 
 
 @mcp.tool()
-def pdf(key: str, pages: str | None = None, library: str = "user") -> dict:
+def pdf(key: str, pages: str | None = None, library: str = "user", attachment: str | None = None) -> dict:
     """Extract text from the PDF attachment of a Zotero item.
 
     Args:
         key: The Zotero item key.
         pages: Optional page range (e.g. '1-5' or '3' for a single page).
         library: Library — 'user' (default) or 'group:<id>'.
+        attachment: Optional attachment key to target a specific PDF on the item
+            (e.g. an appendix). Must belong to `key`; defaults to the first PDF.
     """
-    return _handle_pdf(key, pages, library=library)
+    return _handle_pdf(key, pages, library=library, attachment=attachment)
 
 
 @mcp.tool()  # type: ignore[no-redef]

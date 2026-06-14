@@ -1,3 +1,5 @@
+import shutil
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -133,6 +135,54 @@ class TestAttachments:
         att = reader.get_pdf_attachment("BILI011", skip_tags={"other"})
         assert att is not None
         assert att.key == "ATCH012"
+
+
+class TestGetPdfAttachmentByKey:
+    def test_hit(self, reader: ZoteroReader):
+        # The addressed PDF belongs to the parent -> returned.
+        att = reader.get_pdf_attachment_by_key("ATCH005", parent_key="ATTN001")
+        assert att is not None
+        assert att.key == "ATCH005"
+        assert att.filename == "attention.pdf"
+
+    def test_addresses_appendix_on_multi_pdf_item(self, reader: ZoteroReader):
+        # BILI011 carries two PDFs; addressing the non-first one works.
+        att = reader.get_pdf_attachment_by_key("ATCH013", parent_key="BILI011")
+        assert att is not None
+        assert att.key == "ATCH013"
+
+    def test_parent_mismatch_returns_none(self, reader: ZoteroReader):
+        # ATCH005 is a real PDF, but it belongs to ATTN001, not BILI011.
+        att = reader.get_pdf_attachment_by_key("ATCH005", parent_key="BILI011")
+        assert att is None
+
+    def test_missing_attachment_returns_none(self, reader: ZoteroReader):
+        att = reader.get_pdf_attachment_by_key("NONEXIST", parent_key="ATTN001")
+        assert att is None
+
+    def test_non_pdf_attachment_returns_none(self, test_db_path: Path, tmp_path: Path):
+        # Copy the shared fixture and attach a non-PDF (HTML snapshot) to DEEP003,
+        # which otherwise has no attachments. The non-PDF must not be addressable.
+        db_copy = tmp_path / "zotero.sqlite"
+        shutil.copy(test_db_path, db_copy)
+        conn = sqlite3.connect(db_copy)
+        # itemTypeID 14 == attachment; DEEP003 is itemID 3; pick a free itemID.
+        conn.execute(
+            "INSERT INTO items (itemID, itemTypeID, libraryID, key) VALUES (?, 14, 1, ?)",
+            (9001, "SNAP9001"),
+        )
+        conn.execute(
+            "INSERT INTO itemAttachments (itemID, parentItemID, linkMode, contentType, path) "
+            "VALUES (?, 3, 0, 'text/html', 'storage:snapshot.html')",
+            (9001,),
+        )
+        conn.commit()
+        conn.close()
+        reader = ZoteroReader(db_copy)
+        try:
+            assert reader.get_pdf_attachment_by_key("SNAP9001", parent_key="DEEP003") is None
+        finally:
+            reader.close()
 
 
 class TestContextManager:

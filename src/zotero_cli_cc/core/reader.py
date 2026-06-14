@@ -631,6 +631,20 @@ class ZoteroReader:
         attachments = self.get_pdf_attachments(key, skip_tags=skip_tags)
         return attachments[0] if attachments else None
 
+    def get_pdf_attachment_by_key(self, attachment_key: str, parent_key: str) -> Attachment | None:
+        """Return the PDF attachment whose key is `attachment_key`, but only if it
+        belongs to `parent_key`.
+
+        Lets callers address a specific PDF on a multi-PDF item (e.g. an appendix
+        or supplementary file). Returns None when the attachment is not a PDF,
+        does not exist, or belongs to a different item — the ownership check is
+        implicit, since it only searches PDFs under `parent_key`.
+        """
+        for att in self.get_pdf_attachments(parent_key):
+            if att.key == attachment_key:
+                return att
+        return None
+
     def find_orphan_attachments(self) -> list[OrphanAttachment]:
         """Find storage-backed attachments whose file is missing from local storage.
 

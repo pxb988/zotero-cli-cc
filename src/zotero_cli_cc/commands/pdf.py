@@ -78,6 +78,12 @@ def _extract_section(markdown: str, section_num: int) -> str:
 )
 @click.option("--outline", is_flag=True, help="Extract and list all headings as a numbered outline")
 @click.option("--section", type=int, default=None, help="Extract content under the N-th heading from outline")
+@click.option(
+    "--attachment",
+    "attachment_key",
+    default=None,
+    help="Extract a specific PDF attachment by its key (must belong to KEY); applies to all extraction modes",
+)
 @click.argument("key")
 @click.pass_context
 def pdf_cmd(
@@ -89,6 +95,7 @@ def pdf_cmd(
     tables: bool,
     outline: bool,
     section: int | None,
+    attachment_key: str | None,
     key: str,
 ) -> None:
     """Extract text from the PDF attachment.
@@ -101,6 +108,7 @@ def pdf_cmd(
       zot pdf ABC123 --pages 1-5    Extract pages 1-5
       zot pdf ABC123 --outline      List all headings as numbered outline
       zot pdf ABC123 --section 3    Extract content under 3rd heading
+      zot pdf ABC123 --attachment DEF456   Extract a specific attachment (e.g. appendix)
       zot pdf ABC123 --references   Parsed reference list (needs GROBID)
       zot pdf ABC123 --tables       Extract tables (needs pdfplumber)
       zot --json pdf ABC123         JSON output with metadata
@@ -133,15 +141,26 @@ def pdf_cmd(
     library_id = resolve_library_id(db_path, ctx.obj)
     reader = ZoteroReader(db_path, library_id=library_id, prefs_js_path=get_prefs_js_path(cfg))
     try:
-        att = reader.get_pdf_attachment(key)
-        if att is None:
-            emit_error(
-                "not_found",
-                f"No PDF attachment found for '{key}'",
-                output_json=json_out,
-                hint="Check item details with: zot read KEY",
-                context="pdf",
-            )
+        if attachment_key:
+            att = reader.get_pdf_attachment_by_key(attachment_key, parent_key=key)
+            if att is None:
+                emit_error(
+                    "not_found",
+                    f"Attachment '{attachment_key}' is not a PDF attachment of '{key}'",
+                    output_json=json_out,
+                    hint="List attachment keys with: zot --json attachment path KEY",
+                    context="pdf",
+                )
+        else:
+            att = reader.get_pdf_attachment(key)
+            if att is None:
+                emit_error(
+                    "not_found",
+                    f"No PDF attachment found for '{key}'",
+                    output_json=json_out,
+                    hint="Check item details with: zot read KEY",
+                    context="pdf",
+                )
         pdf_path = att.path
         if not pdf_path or not pdf_path.exists():
             emit_error(
