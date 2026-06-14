@@ -20,24 +20,32 @@ def attachment_group() -> None:
 @attachment_group.command("path")
 @click.argument("item_key")
 @click.option(
+    "--first",
+    "first_only",
+    is_flag=True,
+    help="Print only the first PDF as a single bare path (article without appendix).",
+)
+@click.option(
     "--all",
     "-a",
     "show_all",
     is_flag=True,
-    help="List every PDF attachment (e.g. article + appendix), one path per line.",
+    hidden=True,
+    help="Deprecated: listing every PDF is now the default. Kept for backward compatibility.",
 )
 @click.pass_context
-def attachment_path(ctx: click.Context, item_key: str, show_all: bool) -> None:
-    """Show the local path of a parent item's PDF attachment(s).
+def attachment_path(ctx: click.Context, item_key: str, first_only: bool, show_all: bool) -> None:
+    """Show the local path of every PDF attachment on a parent item.
 
-    By default prints the first PDF only (one bare path on stdout). Pass --all to
-    list every PDF — useful when an item carries an appendix or supplementary file.
+    By default lists all PDFs (one bare path per line on stdout) — modern items
+    usually carry an appendix or supplementary file alongside the article. Pass
+    --first to print only the first PDF, the pre-0.10 single-path behavior.
 
     \b
     Examples:
-      zot attachment path ABC123            # first PDF
-      zot attachment path ABC123 --all      # all PDFs, one per line
-      zot --json attachment path ABC123 -a  # all PDFs as a JSON array
+      zot attachment path ABC123            # all PDFs, one per line
+      zot attachment path ABC123 --first    # first PDF only
+      zot --json attachment path ABC123     # all PDFs as a JSON array
     """
     cfg = load_config(profile=ctx.obj.get("profile"))
     json_out = ctx.obj.get("json", False)
@@ -67,11 +75,12 @@ def attachment_path(ctx: click.Context, item_key: str, show_all: bool) -> None:
                 context="attachment path",
             )
 
-        if show_all:
-            _emit_all(item_key, pdfs, json_out)
+        # `--all` is the default now; only `--first` narrows to a single path.
+        if first_only:
+            _emit_first(item_key, pdfs[0], json_out)
             return
 
-        _emit_first(item_key, pdfs[0], json_out)
+        _emit_all(item_key, pdfs, json_out)
     finally:
         reader.close()
 
@@ -84,7 +93,7 @@ def _emit_first(item_key: str, attachment: Attachment, json_out: bool) -> None:
             f"PDF file not found at {pdf_path or attachment.filename}",
             output_json=json_out,
             hint="The file may have been moved or the attachment path could not be resolved. "
-            "Check Zotero storage directory. Use --all to list every PDF on the item",
+            "Check Zotero storage directory. Run without --first to list every PDF on the item",
             context="attachment path",
         )
 

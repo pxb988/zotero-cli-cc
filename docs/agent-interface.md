@@ -253,11 +253,45 @@ separate parser should use `zot attachment path` instead of `zot open`.
 only resolves the local file path and performs no GUI action or text extraction.
 
 ```bash
-zot attachment path ABCD1234
-zot --json attachment path ABCD1234
+zot attachment path ABCD1234           # all PDFs (default)
+zot --json attachment path ABCD1234    # all PDFs as a JSON array
+zot attachment path ABCD1234 --first   # first PDF only (single object)
 ```
 
-Envelope:
+By default the command lists **every** PDF attachment on the item — modern
+items usually carry an appendix or supplementary file alongside the article.
+The default envelope is an array:
+
+```json
+{
+  "ok": true,
+  "data": {
+    "item_key": "ABCD1234",
+    "count": 2,
+    "attachments": [
+      {
+        "attachment_key": "ATT0001",
+        "path": "/Users/me/Zotero/storage/ATT0001/paper.pdf",
+        "filename": "paper.pdf",
+        "exists": true,
+        "mime_type": "application/pdf"
+      },
+      {
+        "attachment_key": "ATT0002",
+        "path": "/Users/me/Zotero/storage/ATT0002/appendix.pdf",
+        "filename": "appendix.pdf",
+        "exists": true,
+        "mime_type": "application/pdf"
+      }
+    ]
+  }
+}
+```
+
+In human mode each `path` is printed on its own line (pipe-friendly even for a
+single-PDF item). Pass `--first` to get only the first PDF as a single bare
+path / single-object envelope (the same attachment `zot pdf` and `zot open`
+select):
 
 ```json
 {
@@ -273,10 +307,10 @@ Envelope:
 }
 ```
 
-The command returns the same first PDF attachment selected by `zot pdf` and
-`zot open`. A missing item, missing PDF attachment, unresolved path, or missing
-local file is reported as `not_found` with exit code 4. Successful output always
-means `path` exists locally.
+A missing item, missing PDF attachment, unresolved path, or missing local file
+is reported as `not_found` with exit code 4. Successful output always means
+each listed `path` exists locally. (The legacy `--all` flag is now the default
+and kept as a hidden no-op alias for backward compatibility.)
 
 ## Find Full Text (`zot find-pdf`)
 
