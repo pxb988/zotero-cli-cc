@@ -42,6 +42,8 @@ def _param_to_dict(param: click.Parameter) -> dict:
     if isinstance(param, click.Option):
         d["flags"] = list(param.opts) + list(param.secondary_opts)
         d["is_flag"] = bool(getattr(param, "is_flag", False))
+        if getattr(param, "hidden", False):
+            d["hidden"] = True
         if param.help:
             d["help"] = param.help
     default = param.default

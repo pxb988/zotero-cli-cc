@@ -212,22 +212,24 @@ rendering pages, inspecting figures, or handing the file to another parser.
 Unlike `zot open KEY`, this command does not launch a GUI viewer.
 
 ```bash
-zot attachment path KEY              # first PDF only (one bare path)
-zot attachment path KEY --all        # every PDF, one path per line
-zot --json attachment path KEY -a    # every PDF as a JSON array
+zot attachment path KEY              # every PDF, one path per line (default)
+zot --json attachment path KEY       # every PDF as a JSON array
+zot attachment path KEY --first      # first PDF only (one bare path)
 ```
 
-By default it returns the **first** PDF: in JSON mode `item_key`,
-`attachment_key`, `path`, `filename`, `exists`, and `mime_type`. Missing items,
-missing PDFs, and missing local files return `not_found`.
+By default it lists **every** PDF whose file exists locally — common now that
+papers ship an **appendix or supplementary file** beside the main article (one
+path per line for humans, even for a single-PDF item). JSON mode returns
+`{item_key, count, attachments: [...]}`, each entry with `attachment_key`,
+`path`, `filename`, `exists`, `mime_type`. Attachments not yet synced to local
+storage are skipped; `not_found` comes back only when the item has no PDF at
+all, or none has a local file.
 
-Pass `--all` (`-a`) when an item carries more than one PDF — common now that
-papers ship an **appendix or supplementary file** beside the main article. It
-lists every PDF whose file exists locally (one path per line for humans). JSON
-mode returns `{item_key, count, attachments: [...]}`, each entry with
-`attachment_key`, `path`, `filename`, `exists`, `mime_type`. Attachments not yet
-synced to local storage are skipped; `not_found` comes back only when the item
-has no PDF at all, or none has a local file.
+Pass `--first` for just the first PDF (the attachment `zot pdf`/`zot open`
+select): JSON mode returns a single object with `item_key`, `attachment_key`,
+`path`, `filename`, `exists`, `mime_type`. Missing items, missing PDFs, and
+missing local files return `not_found`. (The old `--all`/`-a` flag is now the
+default and kept as a hidden alias.)
 
 ## Utilities
 

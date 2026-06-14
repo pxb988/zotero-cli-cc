@@ -7,6 +7,25 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-14
+
+### Changed
+
+- **`zot attachment path KEY` now lists *every* PDF by default** (article +
+  appendix/supplementary), instead of only the first. Human output prints one
+  bare path per line (single-PDF items still emit one line, so piping is
+  unchanged). JSON mode now returns `{item_key, count, attachments: [...]}` by
+  default — each entry carries `attachment_key`, `path`, `filename`, `exists`,
+  `mime_type`. This is a breaking change to the default JSON envelope shape for
+  this command.
+- New `--first` flag restores the pre-0.10 single-path behaviour (one bare path
+  for humans, single-object envelope `{item_key, attachment_key, path, ...}` in
+  JSON) — the same attachment selected by `zot pdf` and `zot open`.
+- The `--all`/`-a` flag is now redundant (its behaviour is the default) and is
+  kept as a **hidden** no-op alias for backward compatibility with 0.9.x.
+- Schema version bumped to `1.10.0` (default `attachment path` envelope shape
+  changed). `zot schema` now emits `"hidden": true` for hidden options.
+
 ## [0.9.0] - 2026-06-12
 
 ### Added
