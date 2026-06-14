@@ -5,6 +5,338 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`zot pdf KEY --attachment ATT_KEY`** extracts a specific PDF attachment of an
+  item instead of the first one — useful for items that carry an appendix or
+  supplementary PDF alongside the article. The attachment must belong to `KEY`
+  (ownership is verified; a foreign or non-PDF key returns `not_found`). The flag
+  applies to all extraction modes (`--pages`, `--annotations`, `--references`,
+  `--tables`, `--outline`, `--section`). Discover attachment keys with
+  `zot --json attachment path KEY`. The MCP `pdf` tool gains a matching optional
+  `attachment` argument.
+
+## [0.10.0] - 2026-06-14
+
+### Changed
+
+- **`zot attachment path KEY` now lists *every* PDF by default** (article +
+  appendix/supplementary), instead of only the first. Human output prints one
+  bare path per line (single-PDF items still emit one line, so piping is
+  unchanged). JSON mode now returns `{item_key, count, attachments: [...]}` by
+  default — each entry carries `attachment_key`, `path`, `filename`, `exists`,
+  `mime_type`. This is a breaking change to the default JSON envelope shape for
+  this command.
+- New `--first` flag restores the pre-0.10 single-path behaviour (one bare path
+  for humans, single-object envelope `{item_key, attachment_key, path, ...}` in
+  JSON) — the same attachment selected by `zot pdf` and `zot open`.
+- The `--all`/`-a` flag is now redundant (its behaviour is the default) and is
+  kept as a **hidden** no-op alias for backward compatibility with 0.9.x.
+- Schema version bumped to `1.10.0` (default `attachment path` envelope shape
+  changed). `zot schema` now emits `"hidden": true` for hidden options.
+
+## [0.9.0] - 2026-06-12
+
+### Added
+
+- **`zot attachment path KEY --all`** (`-a`) — list every PDF attachment of an
+  item, one local path per line, instead of just the first. Built for items that
+  now routinely ship an appendix or supplementary PDF alongside the main article.
+  In JSON mode it returns `{item_key, count, attachments: [...]}` with each entry
+  carrying `attachment_key`, `path`, `filename`, `exists`, and `mime_type`.
+  Attachments with no local file are skipped; `not_found` is returned only when
+  the item has no PDF at all, or no PDF has been synced to local storage.
+  Default (no flag) behaviour is unchanged — still prints the first PDF's path.
+- New reader API `ZoteroReader.get_pdf_attachments(key)` returning all PDFs;
+  `get_pdf_attachment` (first PDF) is now a thin wrapper over it.
+
+### Changed
+
+- Schema version bumped to `1.9.0` (additive: new `--all` option on
+  `attachment path`).
+
+## [0.8.0] - 2026-06-03
+
+### Added
+
+- **`zot orphans`** — find and clean attachments whose stored file is missing
+  from local `storage/` (Zotero's "the attached file could not be found").
+  `orphans list` classifies each as `dead` (no copy anywhere — safe to remove),
+  `recoverable` (server still has it — fix by file-sync), or `unknown`;
+  `orphans clean` deletes the dead ones via the Web API (`--dry-run` / `--yes` /
+  `--idempotency-key`; `--include-recoverable` to also drop server-held ones).
+  Mirrored as the read-only `find_orphans` MCP tool.
+- **`zot attach --via-bridge`** — import a file through the running Zotero
+  desktop (the `zot-cli-bridge` plugin's new `POST /zot-cli/import-file`
+  endpoint → `Zotero.Attachments.importFromFile`) so the binary lands in local
+  storage immediately instead of cloud-only, cooperating with attachment movers
+  like zotero-attanger. Bridge plugin bumped to **v0.3.0**; also exposed as
+  `attach(via_bridge=True)` over MCP.
+- **GROBID extractor** (`pdf.extractor = "grobid"` / `ZOT_GROBID_URL`): a
+  references/structure tier backed by a running GROBID service (default
+  `http://localhost:8070`). Adds `extract_references()` to the extractor
+  interface and a `zot pdf KEY --references` flag that returns the parsed
+  reference list (title / authors / year / journal / DOI). Lighter than the
+  vision-model extractors; intended for citation verification and metadata
+  completion. GROBID is not bundled — the user runs the service.
+- **`references` MCP tool** in `zot mcp serve`: exposes the GROBID-parsed
+  reference list (title / authors / year / journal / DOI) over MCP, so an agent
+  can verify citations without shelling out. Returns `error` + `hint` when no
+  GROBID service is reachable.
+- **`pdfplumber` table extractor** (`zotero-cli-cc[pdfplumber]`): pure-Python
+  table extraction (no ML / GPU / network). Adds `extract_tables()` to the
+  extractor interface, a `zot pdf KEY --tables` flag, and a `tables` MCP tool.
+  All-empty tables (spurious grids pdfplumber detects on figure-heavy pages)
+  are filtered out so only tables with real cell content are returned.
+- **`pymupdf4llm` bundled into the `[pymupdf]` extra**: installing the extra now
+  also enables higher-quality local Markdown output (no API / network — the
+  `PyMuPdfExtractor` already uses it when present).
+
+### Changed
+
+- **License**: relicensed from CC-BY-NC-4.0 to a dual license —
+  **AGPL-3.0-or-later** for open-source use plus a separate **commercial
+  license** (see `LICENSE` / `LICENSE-COMMERCIAL`). The base install ships no
+  AGPL runtime code (default `pdfium` extractor; `pymupdf` is opt-in).
+- **`zot attach`** now reports where the file landed via `data.stored`
+  (`"cloud"` for the default Web-API upload, `"local"` for `--via-bridge`), and
+  warns that a cloud upload only reaches local `storage/` after a desktop
+  file-sync. `schema_version` 1.6.0 → 1.7.0.
+
+## [0.7.0] - 2026-05-29
+
+### Added
+
+- `zot ask "QUESTION" --workspace NAME` retrieves a citation-keyed **evidence
+  pack** from a workspace's RAG index (hybrid BM25 + embedding retrieval via
+  reciprocal rank fusion) and returns it with `answer_instructions`, so the
+  calling agent can synthesize a grounded, cited answer. Unlike
+  `workspace query` (which dumps ranked chunks), each evidence entry is tagged
+  with its Zotero item key as the `cite_key` and carries per-method scores.
+  Following the same contract as `summarize`, `zot` prepares the context but
+  calls **no generative LLM** itself — the agent is the model. Options:
+  `--evidence-k` (default 12) and `--mode auto|bm25|semantic|hybrid`.
+- Schema version bumped to `1.6.0`.
+
+### Changed
+
+- **Default PDF extractor is now `pdfium`** (pypdfium2, BSD/Apache-licensed)
+  instead of `pymupdf`. PyMuPDF is AGPL/Artifex-licensed, so it is no longer a
+  core dependency — a plain `pip install zotero-cli-cc` now ships no AGPL code,
+  making it usable in commercial/closed-source products without an Artifex
+  license. PyMuPDF moves to an optional extra:
+
+  ```
+  pip install 'zotero-cli-cc[pymupdf]'
+  ```
+
+  Install the extra to enable the `pymupdf` extractor, which adds PDF
+  annotation/highlight extraction and higher-quality markdown. The default
+  `pdfium` extractor covers text and DOI extraction; it returns an empty list
+  for annotations. The MinerU fallback now falls back to `pdfium`. Select an
+  extractor explicitly with `extractor = "..."` in config or
+  `ZOT_PDF_EXTRACTOR`.
+
+## [0.6.0] - 2026-05-28
+
+### Added
+
+- `zot enrich KEY...` writes journal metrics (impact factor, JCR/CAS quartile,
+  core-journal flags, …) into an item's Extra field. Deliberately
+  **source-neutral**: values come from inline `--set "Label=value"` flags or a
+  user-maintained `--from-map` TOML table (matched by journal name) — `zot`
+  ships no journal data and calls no third-party API, so it stays independent of
+  any external product. Metrics are written in a `<!-- zot:metrics -->` block,
+  so re-running replaces only that block (idempotent) and preserves other Extra
+  content. Supports `--dry-run`.
+- `zot rename KEY...` renames an item's PDF attachment files from its metadata
+  via the bridge plugin. The default template is `{journal}_{year}_{title}`
+  (tokens `{journal} {year} {title} {fulltitle} {shorttitle} {author}`;
+  `{title}` prefers the Short Title field when set). `{journal}` is resolved
+  from a `Jab/#` tag or an item-type-aware abbreviation (arXiv → `Pre`,
+  single-word venues kept whole so `Nature` stays `Nature`). Empty tokens are
+  collapsed (no `Pre__x`) and names are truncated to a filesystem-safe length.
+  Non-PDF attachments (Excel/Word/snapshots) are filtered out by content type;
+  supplementary PDFs are detected by filename and get an `_SI` suffix so names
+  never collide. Supports `--dry-run`, `--main-only`,
+  `--force`, `--template`, and `--attachment/--name` for explicit single-file
+  renames. Requires the `zot-cli-bridge` plugin **v0.2.0+** (re-run
+  `zot bridge install`). `meta.schema_version` is bumped 1.4.0 → 1.5.0.
+
+## [0.5.0] - 2026-05-28
+
+### Added
+
+- `zot find-pdf KEY` triggers Zotero desktop's "Find Full Text" over a local
+  bridge plugin, so the CLI can fetch and attach PDFs that the Zotero Web API
+  cannot reach (paywalled content behind the desktop's configured resolvers,
+  authenticated sessions, and institutional proxies). Ships with
+  `zot bridge install` / `status` / `uninstall` to package the bundled
+  `zot-cli-bridge` plugin into an `.xpi` and guide installation. Both commands
+  are also exposed over MCP. `meta.schema_version` is bumped 1.3.0 → 1.4.0 (#43).
+- `zot workspace index --skip-tag` excludes attachments carrying a given tag
+  from the RAG index (default `skip-index`), so large or irrelevant PDFs can be
+  kept out of the index. Also available on the MCP `workspace_index` tool
+  (#44, #46).
+
+### Fixed
+
+- On Windows with a CJK (GBK/CP936) system locale, `zot` crashed with
+  `UnicodeEncodeError` whenever output contained characters outside the GBK
+  range (e.g. emoji). stdout/stderr are now reconfigured to UTF-8 at startup on
+  Windows when the encoding is not already UTF-8 (#48).
+
+### Changed
+
+- The bundled Claude Code skill was split from a single `SKILL.md` into a
+  concise entry point plus on-demand `references/` files (commands, workspaces,
+  workflows, windows-encoding), and now documents the `find-pdf` / `bridge`
+  commands and `workspace index --skip-tag` (#49).
+
+## [0.4.4] - 2026-05-14
+
+### Fixed
+
+- `zot add --doi` created empty items because the Zotero Web API does not
+  auto-resolve DOIs the way the desktop translator does. The CLI now
+  fetches metadata from Crossref (title, creators, journal, volume/issue/
+  pages, date, ISSN, abstract, publisher, language) and merges it into the
+  item template before posting, so created items are populated, not bare
+  shells. Same fix applies to the MCP `add` / `add_from_pdf` handlers.
+  Pass `--no-resolve` to opt out, set `ZOT_CROSSREF_MAILTO` to join
+  Crossref's polite pool. `meta.schema_version` is bumped 1.1.0 → 1.2.0
+  for the additive envelope slot (`data.resolved` / `data.resolve_warning`)
+  (#41, #42).
+
+## [0.4.3] - 2026-05-11
+
+### Fixed
+
+- Update-available banner hard-coded `uv tool upgrade zotero-cli-cc`, which
+  is wrong for users who installed via pip / conda / pipx. The suggested
+  command is now detected from `sys.executable` (uv tool / pipx) with a
+  `pip install -U` fallback that works for pip, conda, and system installs (#31).
+
+## [0.4.2] - 2026-05-10
+
+### Fixed
+
+- Update-available nag fired indefinitely after upgrading because
+  `__version__` was hardcoded in `__init__.py` and missed in the 0.4.0 / 0.4.1
+  bumps, so installed copies of 0.4.1 reported themselves as 0.3.0. Version is
+  now sourced from package metadata (`importlib.metadata`), making
+  `pyproject.toml` the single source of truth (#30).
+
+## [0.4.1] - 2026-05-05
+
+Embedding configuration cleanup. The provider-specific Aliyun key
+(`aliyun_api_key` / `ZOT_EMBEDDING_ALIYUN_KEY`) and the implicit
+`provider="auto"` mode were leaking the multi-provider routing
+implementation into the user-facing config without a symmetrical
+counterpart for Jina. Single-provider, single-key surface is cleaner.
+
+### Changed
+
+- `[embedding] provider` default is now `"jina"` (was `"auto"`). Set
+  `provider = "aliyun"` (or `ZOT_EMBEDDING_PROVIDER=aliyun`) to use
+  Aliyun DashScope.
+
+### Removed (Breaking, very rare)
+
+- `[embedding] aliyun_api_key` config key — use the unified
+  `[embedding] api_key` instead.
+- `ZOT_EMBEDDING_ALIYUN_KEY` env var — use `ZOT_EMBEDDING_KEY` instead.
+- `provider = "auto"` mode — pick a provider explicitly.
+
+If you upgraded to 0.4.0 within the past hour and were already using
+the Aliyun-specific key, rename it to `api_key` /
+`ZOT_EMBEDDING_KEY` and set `provider = "aliyun"`.
+
+## [0.4.0] - 2026-05-05
+
+PDF extraction overhaul, envelope routing for the rest of the `--json` surface,
+typed exit codes wired up across all command error paths, and a CI repair pass.
+`schema_version` bumps to **1.1.0**.
+
+### Added
+
+- **MinerU PDF extractor** alongside the existing pymupdf-based extractor, with
+  a new `BasePdfExtractor` abstract class and automatic fallback when MinerU
+  fails (`zot pdf KEY --extractor mineru`). Configure via `[pdf] extractor`,
+  `[pdf] mineru_token`, or `MINERU_TOKEN` / `ZOT_PDF_EXTRACTOR` env vars.
+- **`zot pdf --outline`** — list every heading in the document as a numbered
+  outline so agents can navigate without dumping the full text.
+- **`zot pdf --section N`** — extract just the content under the N-th heading
+  from `--outline`. Useful for "show me the methods section" workflows.
+- **`zot workspace index --extractor`** — choose the PDF extractor used during
+  RAG indexing.
+- **Embedding provider router** with first-class support for Aliyun
+  (DashScope, OpenAI-compatible) and Jina endpoints. Routes via the new
+  `[embedding] provider` config key / `ZOT_EMBEDDING_PROVIDER` env var.
+  *(0.4.1 simplified the surface — see below.)*
+- **Attachment resolver** that handles `storage:` paths, `file://` URLs,
+  Zotero's `attachments:` paths, Windows drive letters, and base-attachment
+  prefs. PDFs in non-default storage directories now resolve correctly.
+- **`progress_callback`** plumbing through the PDF extraction path so MinerU
+  batch operations and per-PDF extraction surface progress to the caller.
+
+### Changed
+
+- **Envelope routing** extended to the remaining `--json` commands:
+  `zot pdf` (incl. `--outline` / `--section`), `zot workspace list`,
+  `zot workspace query`, and `zot config cache list` now emit the standard
+  `{ok, data, meta}` envelope. `workspace query` `data` becomes
+  `{mode, results}` rather than the bare results list.
+- **`schema_version` 1.0.0 → 1.1.0** to reflect the envelope-coverage extension
+  and the typed-exit-code parity. `docs/agent-interface.md` updated.
+- **Typed exit codes wired across all command error paths.** Previously many
+  error paths called `print_error(...); return`, printing the error message
+  but silently exiting 0. They now use `emit_error(...)` with the appropriate
+  typed code:
+  - `not_found` (4): item / PDF / workspace / collection / profile / index /
+    section missing — affects `cite`, `export`, `summarize`, `open`, `pdf`,
+    `workspace delete/add/remove/show/export/import/search/index/query`,
+    `config profile_set`.
+  - `validation_error` (3): bad page range in `pdf`, missing required source
+    flag in `workspace import`, invalid workspace name.
+  - `auth_missing` (2): all `tag` / `trash restore` / `collection`
+    write commands when API credentials aren't configured.
+  - `conflict` (6): `workspace new` when the workspace already exists,
+    and **`zot duplicates` now exits 6 when duplicates are found** so
+    agents can branch on `if zot duplicates …; then …; else act_on_dups; fi`.
+  - `runtime_error` (1): caught `PdfExtractionError` in `pdf` and
+    `ZoteroWriteError` in `collection move/delete/rename`.
+- **`zot relate KEY`** with no related items is now a normal exit-0 outcome
+  (matching `zot search` on no matches) rather than an error message.
+- **`config cache list`** robustness: graceful fallback when the cache DB is
+  unreachable; closes the connection in a `finally` block.
+
+### Fixed
+
+- 20 pre-existing test failures on `main` repaired (some were envelope-shape
+  drift between tests and production; the rest were genuine exit-code
+  regressions covered by the migration above). The `ci.yml` pytest run goes
+  green again.
+- `tests/test_extracts_text` no longer breaks on hosts without
+  `~/.config/zot/config.toml`. The previous over-broad `Path.exists` mock
+  also patched `load_pdf_config`'s file-existence check; tightened to a
+  targeted `load_pdf_config` mock.
+
+### Breaking
+
+- Tools / agents parsing `--json` output from `zot pdf`, `zot workspace
+  list`, `zot workspace query`, or `zot config cache list` need to unwrap
+  the standard envelope (`result["data"]`). Other commands were already
+  enveloped; this brings the rest of the surface into line.
+- Error paths that previously exited 0 with a printed message now exit
+  with their typed code (1, 2, 3, 4, or 6). Scripts that ran
+  `zot cite NONEXIST && echo ok` and similar will now correctly fail.
+- `zot duplicates` exits **6 (CONFLICT)** when duplicates are detected.
+  Scripts that ignored the exit code or used `if zot duplicates; then`
+  will need to invert the branch.
+
 ## [0.3.0] - 2026-04-15
 
 Agent-native CLI interface. `zot` now serves humans, AI agents (Claude Code,
