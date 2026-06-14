@@ -41,6 +41,7 @@ zot workspace query "RLHF" --workspace my-ws  # RAG search
 | PDF full text | `zot --json pdf KEY` |
 | PDF outline | `zot --json pdf --outline KEY` |
 | PDF section | `zot --json pdf --section SECID KEY` |
+| PDF: specific attachment | `zot --json pdf KEY --attachment ATT_KEY` (e.g. appendix; get ATT_KEY from `zot --json attachment path KEY`) |
 | Local PDF path | `zot attachment path KEY` (all PDFs incl. appendix/supplementary; `--first` for just the first) |
 | Fetch/attach missing PDF | `zot find-pdf KEY` (needs Zotero desktop + bridge) |
 | Rename attachment files | `zot rename KEY --dry-run` (needs bridge; preview first) |

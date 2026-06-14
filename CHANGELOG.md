@@ -7,6 +7,17 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **`zot pdf KEY --attachment ATT_KEY`** extracts a specific PDF attachment of an
+  item instead of the first one — useful for items that carry an appendix or
+  supplementary PDF alongside the article. The attachment must belong to `KEY`
+  (ownership is verified; a foreign or non-PDF key returns `not_found`). The flag
+  applies to all extraction modes (`--pages`, `--annotations`, `--references`,
+  `--tables`, `--outline`, `--section`). Discover attachment keys with
+  `zot --json attachment path KEY`. The MCP `pdf` tool gains a matching optional
+  `attachment` argument.
+
 ## [0.10.0] - 2026-06-14
 
 ### Changed

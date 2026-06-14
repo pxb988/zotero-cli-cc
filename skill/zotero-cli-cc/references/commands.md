@@ -199,11 +199,26 @@ zot --json pdf ITEMKEY                      # Full text extraction
 zot --json pdf --outline ITEMKEY            # Section headings + secid
 zot --json pdf --section SECID ITEMKEY      # Extract specific section
 zot pdf ITEMKEY --annotations               # PDF annotations
+zot --json pdf ITEMKEY --attachment ATT_KEY # Extract a specific attachment (e.g. appendix)
 zot --json summarize ITEMKEY
 zot summarize-all
 ```
 
 **Token-saving strategy**: For large PDFs, use `--outline` to get section IDs first, then `--section` to extract only what you need.
+
+#### Targeting a specific PDF on a multi-PDF item
+
+By default `zot pdf` extracts the item's **first** PDF. When an item carries
+more than one (article + appendix/supplementary), pass `--attachment ATT_KEY`
+to address a specific one. The attachment must belong to the item — a foreign or
+non-PDF key returns `not_found`. The flag applies to every extraction mode
+(`--pages`, `--annotations`, `--references`, `--tables`, `--outline`,
+`--section`).
+
+```bash
+zot --json attachment path ITEMKEY          # 1. list each PDF with its attachment_key
+zot --json pdf ITEMKEY --attachment ATT_KEY # 2. extract the one you want
+```
 
 #### Getting a local PDF path for agents
 
