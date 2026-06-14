@@ -23,6 +23,17 @@ zot pdf ABC123 --annotations
 
 提取 PDF 中的高亮、批注和笔记，包含页码信息。
 
+## 提取指定附件
+
+默认 `zot pdf` 提取条目的**第一个** PDF。当一个条目挂有多个 PDF（正文 + 附录 / 补充材料）时，用 `--attachment` 按 attachment key 指定要提取的那一个：
+
+```bash
+zot --json attachment path ABC123              # 1. 列出每个 PDF 及其 attachment_key
+zot pdf ABC123 --attachment DEF456             # 2. 提取指定的那个（如附录）
+```
+
+附件必须属于该条目——传入外来或非 PDF 的 key 会返回 `not_found`。`--attachment` 对所有提取模式生效（`--pages`、`--annotations`、`--references`、`--tables`、`--outline`、`--section`）。
+
 ## 缓存管理
 
 PDF 文本在首次提取后会本地缓存：
