@@ -18,7 +18,7 @@
 
 - **读操作** — 直接读取本地 SQLite，零配置、离线可用、毫秒级响应
 - **写操作** — 通过 Zotero Web API 安全写入，Zotero 完全感知变更
-- **PDF + RAG** — 提取 PDF 全文并自动缓存；内置 BM25（可选向量）按主题工作空间检索
+- **PDF + RAG** — 提取 PDF 全文并自动缓存；全库语义检索（`search --semantic`）和按主题工作空间 RAG，均支持 BM25 + 可选向量混合检索
 - **Agent-native** — 稳定 JSON envelope、类型化退出码、`zot schema`、`--dry-run`、`--idempotency-key`、NDJSON 流
 - **MCP 服务器** — 通过 `zot mcp serve` 向 Claude Desktop / LM Studio / Cursor 暴露 45 个工具
 

@@ -22,6 +22,7 @@ context; open items are tracked here until they're promoted to GitHub Issues.
 - [x] `--library group:<id>`: group library support (all commands + MCP tools)
 - [x] `zot add --pdf paper.pdf`: add from local PDF (auto-extract DOI + upload attachment)
 - [x] Semantic search via workspace RAG (BM25 + optional embeddings, v0.2.0)
+- [x] Full-library semantic search: `zot index build` + `zot search --semantic` (BM25 + embedding hybrid, v0.11.0)
 - [x] Improve `--help` text with usage examples
 - [x] Shell completion install instructions in README (zsh/bash/fish)
 - [x] `pipx` install instructions

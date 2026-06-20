@@ -5,10 +5,23 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.0] - 2026-06-20
 
 ### Added
 
+- **Full-library semantic search** — `zot search "query" --semantic` performs
+  BM25 + optional embedding hybrid retrieval over the entire Zotero library.
+  Returns item-level results ranked by relevance score. Requires `zot index build`
+  first; auto-selects hybrid mode when embeddings are available.
+- **`zot index build`** — builds a full-library semantic index at
+  `~/.config/zot/index/<library_id>.idx.sqlite`. Indexes all items (metadata
+  chunks for every item, PDF text chunks for items with attachments). Incremental
+  by default; `--force` for full rebuild.
+- **`zot index status`** — shows index status: item count, chunk count, embedding
+  availability, last indexed time. JSON envelope output.
+- **Zhipu embedding provider** — `[embedding] provider = "zhipu"` routes
+  embeddings through 智谱 BigModel API (`open.bigmodel.cn`), joining existing
+  jina and aliyun providers. Provider priority: zhipu > aliyun > jina.
 - **`zot pdf KEY --attachment ATT_KEY`** extracts a specific PDF attachment of an
   item instead of the first one — useful for items that carry an appendix or
   supplementary PDF alongside the article. The attachment must belong to `KEY`
