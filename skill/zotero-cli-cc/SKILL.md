@@ -1,19 +1,20 @@
 ---
 name: zotero-cli-cc
-description: Use when user mentions papers, references, citations, Zotero, literature, bibliography, workspaces, or needs to search, read, export, or organize documents. Handles all zot CLI operations including workspace-based RAG search.
+description: Use when user mentions papers, references, citations, Zotero, literature, bibliography, workspaces, or needs to search, read, export, or organize documents. Handles all zot CLI operations including full-library semantic search and workspace-based RAG search.
 ---
 
 # Zotero CLI Skill
 
-`zot` is an all-in-one Zotero CLI: search, CRUD, PDF extraction, citation export, and workspace-based RAG. Local SQLite for reads, Zotero Web API for writes.
+`zot` is an all-in-one Zotero CLI: search, CRUD, PDF extraction, citation export, full-library semantic search, and workspace-based RAG. Local SQLite for reads, Zotero Web API for writes.
 
 ## Quick Start
 
 ```bash
 zot search "transformer attention"       # Search papers
+zot search "monetary policy" --semantic  # Semantic search (BM25 + embedding)
 zot --json read ABC123                   # View paper details (JSON)
 zot export ABC123                        # BibTeX export
-zot workspace query "RLHF" --workspace my-ws  # RAG search
+zot workspace query "RLHF" --workspace my-ws  # RAG search within workspace
 ```
 
 ## Critical Rules
@@ -31,6 +32,9 @@ zot workspace query "RLHF" --workspace my-ws  # RAG search
 | User Intent | Command |
 |-------------|---------|
 | Search metadata | `zot --json search "query"` |
+| Semantic search (full library) | `zot --json search "query" --semantic` |
+| Build semantic index | `zot index build` |
+| Check index status | `zot --json index status` |
 | Read item detail | `zot --json read KEY` |
 | Export BibTeX/RIS/JSON | `zot export KEY --format bibtex` |
 | Formatted citation | `zot cite KEY --style apa` |
@@ -57,7 +61,7 @@ zot workspace query "RLHF" --workspace my-ws  # RAG search
 | Ask (evidence pack) | `zot --json ask "question" --workspace NAME` |
 | Group library | `zot --library group:ID search "q"` |
 
-**Rule of thumb**: `zot search` for quick metadata lookups. `zot workspace query` for deep content search over curated papers. `zot ask` when you need a citation-keyed evidence pack to write a grounded answer — it returns chunks tagged with their Zotero item key plus `answer_instructions`; `zot` does not call an LLM, so *you* synthesize and cite the answer from the evidence.
+**Rule of thumb**: `zot search` for quick metadata lookups. `zot search --semantic` for full-library semantic search (BM25 + embedding hybrid; requires `zot index build` first). `zot workspace query` for deep content search over curated papers. `zot ask` when you need a citation-keyed evidence pack to write a grounded answer — it returns chunks tagged with their Zotero item key plus `answer_instructions`; `zot` does not call an LLM, so *you* synthesize and cite the answer from the evidence.
 
 ## Global Flags
 

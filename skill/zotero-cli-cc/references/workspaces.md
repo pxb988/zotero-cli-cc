@@ -2,6 +2,8 @@
 
 Workspaces are local topic-based paper collections for organizing research. Each workspace stores item keys in a TOML file (`~/.config/zot/workspaces/<name>.toml`) — no Zotero API needed.
 
+> **Workspace RAG vs full-library semantic search**: `zot workspace query` searches within a curated set of papers (chunk-level results). `zot search --semantic` searches the entire library (item-level results). Use workspaces for focused research on a topic; use `--semantic` for broad discovery across the whole library.
+
 ## Workspace Management
 
 ```bash

@@ -5,10 +5,35 @@
 ```bash
 zot --json search "transformer attention"
 zot --json search "BERT" --collection "NLP"
+zot --json search "monetary policy" --semantic           # Semantic search (full library)
+zot --json search "attention" --semantic --type book     # Semantic + type filter
 zot --json list --collection "Machine Learning" --limit 10
 zot --json read ITEMKEY
 zot --json relate ITEMKEY
 ```
+
+## Full-Library Semantic Index
+
+```bash
+zot index build                          # Build/update index (incremental)
+zot index build --force                  # Full rebuild from scratch
+zot index build --extractor pymupdf      # Use specific PDF extractor
+zot --json index status                  # Check index status (items, chunks, embeddings)
+```
+
+`zot index build` scans all library items and builds a BM25 + optional embedding index
+at `~/.config/zot/index/<library_id>.idx.sqlite`. Every item gets a metadata chunk
+(title/authors/abstract/tags); items with PDF attachments also get text chunks.
+Incremental by default — only indexes new items. Use `--force` to rebuild from scratch.
+
+`zot search --semantic` requires this index. If the index doesn't exist, it exits
+with code 4 and a hint to run `zot index build`.
+
+Embeddings are optional — configure `[embedding]` in `config.toml` or set
+`ZOT_EMBEDDING_URL` + `ZOT_EMBEDDING_KEY`. Without embeddings, `--semantic` uses
+BM25-only; with embeddings it auto-selects hybrid mode (BM25 + cosine + RRF fusion).
+
+Results are item-level (not chunks), ranked by relevance score.
 
 ## Notes & Tags
 
