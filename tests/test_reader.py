@@ -251,3 +251,11 @@ class TestRelatedItems:
     def test_no_relations(self, reader: ZoteroReader):
         related = reader.get_related_items("DEEP003")
         assert isinstance(related, list)
+
+
+def test_get_all_item_ids(reader: ZoteroReader):
+    """get_all_item_ids returns all non-excluded item IDs in the library."""
+    ids = reader.get_all_item_ids()
+    assert isinstance(ids, list)
+    assert len(ids) > 0
+    assert all(isinstance(i, int) for i in ids)

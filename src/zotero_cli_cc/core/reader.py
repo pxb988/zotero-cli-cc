@@ -344,6 +344,17 @@ class ZoteroReader:
 
         return SearchResult(items=items, total=total, query=query)
 
+    def get_all_item_ids(self) -> list[int]:
+        """Return all non-excluded item IDs in the library."""
+        conn = self._connect()
+        excl_sql, excl_params = self._excluded_filter()
+        lib_sql, lib_params = self._library_filter()
+        rows = conn.execute(
+            f"SELECT itemID FROM items i WHERE itemTypeID {excl_sql} {lib_sql}",
+            (*excl_params, *lib_params),
+        ).fetchall()
+        return [r["itemID"] for r in rows]
+
     def get_recent_items(
         self,
         since: str,
