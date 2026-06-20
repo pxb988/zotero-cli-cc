@@ -21,6 +21,7 @@ from zotero_cli_cc.commands.duplicates import duplicates_cmd
 from zotero_cli_cc.commands.enrich import enrich_cmd
 from zotero_cli_cc.commands.export import export_cmd
 from zotero_cli_cc.commands.find_pdf import find_pdf_cmd
+from zotero_cli_cc.commands.index_cmd import index_group
 from zotero_cli_cc.commands.list_cmd import list_cmd
 from zotero_cli_cc.commands.mcp import mcp_group
 from zotero_cli_cc.commands.note import note_cmd
@@ -70,6 +71,7 @@ _READ_COMMANDS = {
     "schema",
     "trash",
     "attachment",
+    "index",
 }
 _WRITE_COMMANDS = {"add", "update", "note", "attach", "find-pdf", "bridge", "rename", "enrich"}
 _DESTRUCTIVE_COMMANDS = {"delete", "update-status", "orphans"}
@@ -312,6 +314,7 @@ main.add_command(workspace_group, "workspace")
 main.add_command(ask_cmd, "ask")
 main.add_command(schema_cmd, "schema")
 main.add_command(attachment_group, "attachment")
+main.add_command(index_group, "index")
 
 
 if __name__ == "__main__":
