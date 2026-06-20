@@ -6,6 +6,7 @@ from zotero_cli_cc.config import EmbeddingConfig
 from zotero_cli_cc.core.embedding_provider import EmbeddingProvider
 from zotero_cli_cc.core.providers.aliyun import AliyunProvider
 from zotero_cli_cc.core.providers.jina import JinaProvider
+from zotero_cli_cc.core.providers.zhipu import ZhipuProvider
 
 
 class EmbeddingRouter:
@@ -35,6 +36,16 @@ class EmbeddingRouter:
                 model=model,
                 base_url=aliyun_url,
             )
+        elif self.config.provider == "zhipu":
+            zhipu_url = self.config.url if "bigmodel" in self.config.url else "https://open.bigmodel.cn/api/paas/v4"
+            zhipu_url = zhipu_url.rstrip("/")
+            if zhipu_url.endswith("/embeddings"):
+                zhipu_url = zhipu_url[: -len("/embeddings")]
+            self.providers["zhipu"] = ZhipuProvider(
+                api_key=api_key,
+                model=model,
+                base_url=zhipu_url,
+            )
 
     def embed(
         self,
@@ -51,7 +62,7 @@ class EmbeddingRouter:
         raise RuntimeError("No embedding provider configured")
 
     def _find_provider(self) -> EmbeddingProvider | None:
-        priority = ["aliyun", "jina"]
+        priority = ["zhipu", "aliyun", "jina"]
         for name in priority:
             if name in self.providers:
                 return self.providers[name]
