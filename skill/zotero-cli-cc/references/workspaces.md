@@ -103,5 +103,38 @@ zot --json pdf --section SECID ITEMKEY      # Extract full section
 
 ## Configuration
 
-- BM25: always available, zero additional dependencies
-- Semantic search: set `ZOT_EMBEDDING_URL` and `ZOT_EMBEDDING_KEY` environment variables
+BM25 is always available with zero additional dependencies.
+
+Semantic/hybrid search requires an embedding provider. Configure via `config.toml` (recommended) or environment variables:
+
+### config.toml (`~/.config/zot/config.toml`)
+
+```toml
+[embedding]
+provider = "zhipu"                              # jina | aliyun | zhipu
+api_key = "your-api-key"
+model = "embedding-3"                           # provider-specific model name
+url = "https://open.bigmodel.cn/api/paas/v4"    # optional; defaults per provider
+```
+
+Provider defaults:
+
+| Provider | Default URL | Default Model |
+|----------|-------------|---------------|
+| `jina` | `https://api.jina.ai/v1/embeddings` | `jina-embeddings-v3` |
+| `aliyun` | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `text-embedding-v3` |
+| `zhipu` | `https://open.bigmodel.cn/api/paas/v4` | `embedding-3-pro` |
+
+### Environment variables (override config.toml)
+
+```bash
+export ZOT_EMBEDDING_PROVIDER=zhipu
+export ZOT_EMBEDDING_URL=https://open.bigmodel.cn/api/paas/v4
+export ZOT_EMBEDDING_KEY=your-api-key
+export ZOT_EMBEDDING_MODEL=embedding-3
+```
+
+## Known Issues
+
+- **`workspace show` 默认只显示前 50 条**：受 `--limit` 全局默认值约束。查看全部条目需传 `--limit 999` 或更大值。
+- **`uv sync` / `pip install --upgrade` 会覆盖 zhipu provider patch**：如果 zhipu 支持尚未发布到 PyPI（当前 PyPI 最新 0.7.0，zhipu 在 0.11.0），从 PyPI 升级会丢失该功能。使用源码安装（`uv sync`）或等待新版发布。

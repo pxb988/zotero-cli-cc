@@ -78,7 +78,8 @@ default_style = "bibtex"
 | `S2_API_KEY` | Semantic Scholar API key (for `update-status`) |
 | `ZOT_EMBEDDING_URL` | Embedding API endpoint (default: Jina AI) |
 | `ZOT_EMBEDDING_KEY` | Embedding API key (enables semantic workspace search) |
-| `ZOT_EMBEDDING_MODEL` | Embedding model name (default: `jina-embeddings-v3`) |
+| `ZOT_EMBEDDING_PROVIDER` | Embedding provider (`jina` / `aliyun` / `zhipu`, default: `jina`) |
+| `ZOT_EMBEDDING_MODEL` | Embedding model name (default: `jina-embeddings-v3`; set to match your provider, e.g. `text-embedding-v3` for aliyun, `embedding-3-pro` for zhipu) |
 
 ## Multiple Profiles
 

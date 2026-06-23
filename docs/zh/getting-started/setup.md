@@ -78,7 +78,8 @@ default_style = "bibtex"
 | `S2_API_KEY` | Semantic Scholar API 密钥（用于 `update-status`） |
 | `ZOT_EMBEDDING_URL` | Embedding API 端点（默认：Jina AI） |
 | `ZOT_EMBEDDING_KEY` | Embedding API 密钥（启用语义工作区搜索） |
-| `ZOT_EMBEDDING_MODEL` | Embedding 模型名称（默认：`jina-embeddings-v3`） |
+| `ZOT_EMBEDDING_PROVIDER` | Embedding 提供方（`jina` / `aliyun` / `zhipu`，默认：`jina`） |
+| `ZOT_EMBEDDING_MODEL` | Embedding 模型名称（默认：`jina-embeddings-v3`；需与 provider 匹配，如 aliyun 用 `text-embedding-v3`、zhipu 用 `embedding-3-pro`） |
 
 ## 多配置文件
 
