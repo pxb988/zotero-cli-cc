@@ -25,9 +25,14 @@ uv run pytest tests/test_reader.py -v
 uv run pytest tests/test_reader.py::test_name -v
 uv run pytest -k "search and not rag" -v
 
-# Run the CLI from source
+# Run the CLI from source (always reflects the current working tree)
 uv run zot search "foo"
 uv run zot schema                         # emit full command tree (agent introspection)
+
+# The globally installed `zot` (via `uv tool install`) is a SEPARATE copy living under
+# ~/.local/share/uv/tools/zotero-cli-cc/. Bumping the version in pyproject.toml or editing
+# source does NOT update it — `zot --version` keeps reporting the old version until you reinstall:
+uv tool install --reinstall .             # rebuild the global `zot` from the working tree
 
 # Build / publish artifacts (hatchling backend)
 uv build
