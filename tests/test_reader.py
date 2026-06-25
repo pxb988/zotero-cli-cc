@@ -259,3 +259,9 @@ def test_get_all_item_ids(reader: ZoteroReader):
     assert isinstance(ids, list)
     assert len(ids) > 0
     assert all(isinstance(i, int) for i in ids)
+
+
+def test_get_all_item_ids_excludes_trash(reader: ZoteroReader):
+    """Items in the trash (deletedItems) must not be indexed. TRSH007 has itemID=7."""
+    ids = reader.get_all_item_ids()
+    assert 7 not in ids

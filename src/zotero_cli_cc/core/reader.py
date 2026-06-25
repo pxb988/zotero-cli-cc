@@ -345,12 +345,13 @@ class ZoteroReader:
         return SearchResult(items=items, total=total, query=query)
 
     def get_all_item_ids(self) -> list[int]:
-        """Return all non-excluded item IDs in the library."""
+        """Return all non-excluded item IDs in the library, excluding trashed items."""
         conn = self._connect()
         excl_sql, excl_params = self._excluded_filter()
         lib_sql, lib_params = self._library_filter()
         rows = conn.execute(
-            f"SELECT itemID FROM items i WHERE itemTypeID {excl_sql} {lib_sql}",
+            f"SELECT itemID FROM items i WHERE itemTypeID {excl_sql} {lib_sql} "
+            "AND i.itemID NOT IN (SELECT itemID FROM deletedItems)",
             (*excl_params, *lib_params),
         ).fetchall()
         return [r["itemID"] for r in rows]
