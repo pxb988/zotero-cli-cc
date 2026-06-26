@@ -36,20 +36,28 @@ zot workspace query "RLHF" --workspace my-ws  # RAG search within workspace
 | Build semantic index | `zot index build` |
 | Check index status | `zot --json index status` |
 | Read item detail | `zot --json read KEY` |
+| Related items | `zot --json relate KEY` |
+| Read / add note | `zot --json note KEY` / `zot note KEY --add "..."` |
+| Add / remove tag | `zot tag KEY --add "important"` / `--remove "to-read"` |
+| Open in viewer / browser | `zot open KEY` / `zot open --url KEY` |
 | Export BibTeX/RIS/JSON | `zot export KEY --format bibtex` |
 | Formatted citation | `zot cite KEY --style apa` |
 | Batch import DOIs | `zot add --from-file dois.txt` |
 | Add single item | `zot add --doi "10.1038/..."` |
 | Update metadata | `zot update KEY --title "New"` |
-| Delete item | `zot --no-interaction delete KEY` |
+| Delete item (→ trash) | `zot --no-interaction delete KEY` |
+| List / restore trash | `zot --json trash list` / `zot trash restore KEY` |
 | PDF full text | `zot --json pdf KEY` |
 | PDF outline | `zot --json pdf --outline KEY` |
 | PDF section | `zot --json pdf --section SECID KEY` |
+| Summarize one / all PDFs | `zot --json summarize KEY` / `zot summarize-all` |
 | PDF: specific attachment | `zot --json pdf KEY --attachment ATT_KEY` (e.g. appendix; get ATT_KEY from `zot --json attachment path KEY`) |
 | Local PDF path | `zot attachment path KEY` (all PDFs incl. appendix/supplementary; `--first` for just the first) |
 | Fetch/attach missing PDF | `zot find-pdf KEY` (needs Zotero desktop + bridge) |
 | Rename attachment files | `zot rename KEY --dry-run` (needs bridge; preview first) |
 | Add journal metrics (IF/分区) | `zot enrich KEY --set "JCR=Q1"` or `--from-map journals.toml` |
+| Attach a file | `zot attach KEY --file supplement.pdf` (add `--via-bridge` for local storage) |
+| Check preprint → published | `zot update-status --limit 20` (preview; `--apply` to write) |
 | Set up find-pdf bridge | `zot bridge install` |
 | Collection list | `zot --json collection list` |
 | Collection items | `zot --json collection items COLLKEY` |
