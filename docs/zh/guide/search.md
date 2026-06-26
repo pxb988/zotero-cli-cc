@@ -9,7 +9,30 @@
 3. **标签** — 精确标签匹配
 4. **PDF 全文索引** — Zotero 内置的全文索引
 
-如需更深层的内容检索（BM25 排序 + 可选语义匹配），请使用 [工作区查询](workspace.md)。
+如需对**全库**做语义排序，使用 `--semantic`（见下方「全库语义检索」一节）。如需在精选的少量论文子集上做深度内容检索，请使用 [工作区查询](workspace.md)。
+
+## 全库语义检索
+
+`zot search --semantic` 不再用上面的关键词匹配，而是用 BM25 加可选的向量相似度对整个文献库排序：
+
+```bash
+zot search "monetary policy transmission" --semantic
+zot search "attention" --semantic --type book      # 可与过滤条件组合
+```
+
+结果为条目级别（按相关度分数排序），`--collection` / `--type` 等常规过滤条件仍然生效。
+
+`--semantic` 需要预先构建索引。构建一次后即可增量刷新：
+
+```bash
+zot index build                 # 构建 / 更新（增量，仅处理新条目）
+zot index build --force         # 从头全量重建
+zot --json index status         # 条目数、chunk 数、是否启用向量
+```
+
+`zot index build` 会为每个条目建立元数据 chunk（有 PDF 附件的条目还会加正文 chunk），并**排除 Zotero 回收站中的条目**。若在构建索引前就运行 `--semantic`，命令会以退出码 `4` 退出并提示先运行 `zot index build`。
+
+向量是可选的：在 `config.toml` 配置 `[embedding]`（或设置 `ZOT_EMBEDDING_URL` + `ZOT_EMBEDDING_KEY`）即可启用混合检索（BM25 + 余弦相似度，RRF 融合）；不配置时 `--semantic` 退化为纯 BM25 排序。
 
 ## 基本搜索
 

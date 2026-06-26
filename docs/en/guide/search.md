@@ -9,7 +9,30 @@
 3. **Tags** — exact tag matching
 4. **PDF fulltext index** — Zotero's built-in fulltext index
 
-For deeper content search with BM25 ranking and optional semantic matching, use [workspace query](workspace.md).
+For full-library semantic ranking, use [`--semantic`](#full-library-semantic-search) (below). For deep content search over a curated subset of papers, use [workspace query](workspace.md).
+
+## Full-Library Semantic Search
+
+`zot search --semantic` ranks the entire library with BM25 plus optional embedding similarity, instead of the keyword matching above:
+
+```bash
+zot search "monetary policy transmission" --semantic
+zot search "attention" --semantic --type book      # combine with filters
+```
+
+Results are item-level (ranked by relevance score), and standard filters like `--collection` / `--type` still apply.
+
+`--semantic` requires a prebuilt index. Build it once, then refresh incrementally:
+
+```bash
+zot index build                 # build / update (incremental — only new items)
+zot index build --force         # full rebuild from scratch
+zot --json index status         # item count, chunk count, embedding availability
+```
+
+`zot index build` indexes every item (a metadata chunk for each, plus PDF text chunks for items with attachments) and **excludes items in the Zotero trash**. If you run `--semantic` before building the index, it exits with code `4` and a hint to run `zot index build`.
+
+Embeddings are optional. Configure `[embedding]` in `config.toml` (or set `ZOT_EMBEDDING_URL` + `ZOT_EMBEDDING_KEY`) to enable hybrid retrieval (BM25 + cosine similarity with RRF fusion); without them, `--semantic` falls back to BM25-only ranking.
 
 ## Basic Search
 

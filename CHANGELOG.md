@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Full-library index no longer indexes trashed items** — `zot index build`
+  previously included items in the Zotero trash (`reader.get_all_item_ids()` did
+  not filter `deletedItems`). It now excludes them, so the index reflects only
+  live library items.
+
 ## [0.11.0] - 2026-06-20
 
 ### Added

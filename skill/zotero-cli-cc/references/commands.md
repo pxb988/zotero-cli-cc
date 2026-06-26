@@ -21,7 +21,8 @@ zot index build --extractor pymupdf      # Use specific PDF extractor
 zot --json index status                  # Check index status (items, chunks, embeddings)
 ```
 
-`zot index build` scans all library items and builds a BM25 + optional embedding index
+`zot index build` scans all library items (excluding items in the trash) and builds a
+BM25 + optional embedding index
 at `~/.config/zot/index/<library_id>.idx.sqlite`. Every item gets a metadata chunk
 (title/authors/abstract/tags); items with PDF attachments also get text chunks.
 Incremental by default — only indexes new items. Use `--force` to rebuild from scratch.
